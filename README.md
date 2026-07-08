@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # KSP Crime Intelligence Platform — Setup Guide
 
 ## Step 1 — Generate data & train models (Kaggle)
@@ -55,3 +56,6 @@ streamlit run app.py
 - **No GPU needed anywhere** — IsolationForest, RandomForest, and DBSCAN are all fast CPU models; training takes seconds on 20k rows.
 - **Swapping in real data later**: if you get an anonymized real dataset, keep the same column names (`district`, `crime_type`, `latitude`, `longitude`, `date`, `hour`, `suspect_id`, `victim_id`, `severity_score`, etc.) and the notebook + app work unmodified.
 - To deploy publicly for judges, push this folder to GitHub and deploy free on [Streamlit Community Cloud](https://streamlit.io/cloud) — point it at `app.py`, it installs `requirements.txt` automatically. Just make sure `artifacts/` is committed to the repo (the pkl/csv files are small, well under GitHub limits).
+=======
+# Datathon
+>>>>>>> 10eabb43b7da11cc0b4e1260a67274f4654a3f56
