@@ -14,6 +14,8 @@ Expected folder layout:
         isolation_forest.pkl
         risk_model.pkl
         top_repeat_offenders.csv
+        emerging_trend_alerts.csv
+        association_rules.csv
 """
 
 import pickle
@@ -71,6 +73,22 @@ def load_top_offenders():
     return pd.read_csv(ART_DIR / "top_repeat_offenders.csv")
 
 
+@st.cache_data
+def load_emerging_trends():
+    file_path = ART_DIR / "emerging_trend_alerts.csv"
+    if file_path.exists():
+        return pd.read_csv(file_path)
+    return pd.DataFrame()
+
+
+@st.cache_data
+def load_association_rules():
+    file_path = ART_DIR / "association_rules.csv"
+    if file_path.exists():
+        return pd.read_csv(file_path)
+    return pd.DataFrame()
+
+
 @st.cache_resource
 def load_risk_model():
     with open(ART_DIR / "risk_model.pkl", "rb") as f:
@@ -90,12 +108,15 @@ if not ART_DIR.exists():
     )
     st.stop()
 
+# Load all data
 incidents = load_incidents()
 daily_risk = load_daily_risk()
 districts = load_districts()
 hotspots = load_hotspots()
 edges, nodes = load_graph_tables()
 top_offenders = load_top_offenders()
+emerging_alerts = load_emerging_trends()
+assoc_rules = load_association_rules()
 
 # ----------------------------------------------------------------------
 # Sidebar navigation + global filters
@@ -292,6 +313,17 @@ elif page == "Network & Link Analysis":
         ],
         width='stretch',
     )
+    
+    st.markdown("---")
+    st.subheader("Association Detection (Market Basket Analysis)")
+    st.caption("Identifies hidden criminal associations between specific crime typologies and legal Acts invoked.")
+    
+    if not assoc_rules.empty:
+        display_rules = assoc_rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].copy()
+        display_rules[['support', 'confidence', 'lift']] = display_rules[['support', 'confidence', 'lift']].round(3)
+        st.dataframe(display_rules.sort_values("lift", ascending=False), width='stretch')
+    else:
+        st.info("No association rules found. Run the latest Kaggle notebook to generate these artifacts.")
 
 # ----------------------------------------------------------------------
 # PAGE: Predictive Risk Dashboard
@@ -384,14 +416,17 @@ elif page == "Trend & Pattern Discovery":
         fig.update_layout(yaxis={"categoryorder": "total ascending"})
         st.plotly_chart(fig, width='stretch')
 
-    st.subheader("Emerging trend alert")
-    recent = incidents[incidents["date"] >= incidents["date"].max() - pd.Timedelta(days=30)]
-    prior = incidents[(incidents["date"] < incidents["date"].max() - pd.Timedelta(days=30)) &
-                       (incidents["date"] >= incidents["date"].max() - pd.Timedelta(days=60))]
-    recent_counts = recent.groupby(["district", "crime_type"]).size()
-    prior_counts = prior.groupby(["district", "crime_type"]).size()
-    spike = (recent_counts / prior_counts.replace(0, np.nan)).dropna().sort_values(ascending=False).head(10)
-    spike_df = spike.reset_index()
-    spike_df.columns = ["district", "crime_type", "spike_ratio"]
-    st.dataframe(spike_df, width='stretch')
-    st.caption("Ratio of last-30-day count vs prior-30-day count. Values > 1 indicate an emerging spike.")
+    st.markdown("---")
+    st.subheader("Emerging Trend Alerts (Z-Score Spikes)")
+    st.caption("Visual indicators when a specific crime category spikes in a region compared to historical averages (Z-Score > 2.0).")
+    
+    if not emerging_alerts.empty:
+        st.error(f"🚨 Detected {len(emerging_alerts)} critical spikes across the state.")
+        display_alerts = emerging_alerts[['district', 'crime_type', 'year_month', 'incident_count', 'mean', 'z_score']].copy()
+        display_alerts.rename(columns={'mean': 'historical_avg'}, inplace=True)
+        display_alerts[['historical_avg', 'z_score']] = display_alerts[['historical_avg', 'z_score']].round(2)
+        
+        # FIX: Removed style.background_gradient to avoid matplotlib dependency crash
+        st.dataframe(display_alerts, width='stretch')
+    else:
+        st.success("No emerging trends detected above the historical baseline at this time.")
