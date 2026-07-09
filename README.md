@@ -368,21 +368,6 @@ streamlit run app.py
 
 ---
 
-# 📷 Screenshots
-
-> Add screenshots of your dashboard here.
-
-Suggested screenshots:
-
-- Dashboard
-- Crime Map
-- Heatmap
-- Network Analysis
-- AI Insights
-- Prediction Dashboard
-
----
-
 # 👨‍💻 Developer
 
 **Varshith Pundru**
